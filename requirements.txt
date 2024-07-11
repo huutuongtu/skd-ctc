@@ -1,0 +1,8 @@
+pandas
+tqdm
+torch
+numpy
+transformers
+librosa
+jiwer
+pyctcdecode
