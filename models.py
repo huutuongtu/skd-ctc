@@ -11,8 +11,13 @@ class Hubert(HubertModel):
         self.classifier_t = nn.Linear(config.hidden_size, 29)
         self.classifier_s = nn.Linear(config.hidden_size, 29)
 
-    def freeze_feature_extractor(self):
-        self.hubert.feature_extractor._freeze_parameters()
+    def freeze(self):
+        for param in self.hubert.parameters():
+            param.requires_grad = False
+    
+    def unfreeze(self):
+        for param in self.hubert.parameters():
+            param.requires_grad = True
 
     def forward(self, audio_input):
         out = self.hubert(audio_input, 

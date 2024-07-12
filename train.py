@@ -3,7 +3,6 @@ from transformers import Wav2Vec2Processor, Wav2Vec2FeatureExtractor, HubertConf
 import torch, json, os, librosa, transformers, gc
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.optim.lr_scheduler import ExponentialLR
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from pyctcdecode import build_ctcdecoder
@@ -15,6 +14,8 @@ import numpy as np
 from dataloader import ASR_Dataset
 from dataloader import text_to_tensor
 from models import Hubert
+from torch.optim.lr_scheduler import CosineAnnealingLR
+
 
 feature_extractor = Wav2Vec2FeatureExtractor(feature_size=1, sampling_rate=16000, padding_value=0.0, padding_side='right', do_normalize=True, return_attention_mask=False)
 min_wer = 100
@@ -60,7 +61,6 @@ model = Hubert.from_pretrained(
     'facebook/hubert-base-ls960',
 )
 
-model.freeze_feature_extractor()
 model = model.to(device)
 
 list_vocab = ['', ' ', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', "'"]
@@ -76,6 +76,11 @@ ctc_loss = nn.CTCLoss(blank = 0)
 
 
 for epoch in range(num_epoch):
+  #freeze model first 12.5% of the steps except linear
+  if epoch < num_epoch//8:
+    model.freeze()
+  else:
+    model.unfreeze()
   model.train().to(device)
   running_loss = []
   print(f'EPOCH {epoch}:')
