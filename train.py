@@ -72,6 +72,8 @@ decoder_ctc = build_ctcdecoder(
 num_epoch=200
 temperature = 1
 optimizer = torch.optim.AdamW(model.parameters(), lr=3e-5)
+warmup_steps = num_epoch//10
+scheduler = CosineAnnealingLR(optimizer, T_max=num_epoch - warmup_steps)
 ctc_loss = nn.CTCLoss(blank = 0)
 
 
@@ -108,6 +110,16 @@ for epoch in range(num_epoch):
     running_loss.append(l_ictc.item())
     loss.backward()
     optimizer.step()
+
+    # linear warmup lr
+    if epoch < warmup_steps:
+      lr = 3e-5 * (epoch + 1) / warmup_steps
+      for param_group in optimizer.param_groups:
+          param_group['lr'] = lr  
+    else:
+      scheduler.step()
+    
+
     optimizer.zero_grad()
     # break
 
