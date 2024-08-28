@@ -91,7 +91,8 @@ for epoch in range(num_epoch):
     i_logits, logits= model(acoustic)
 
     #skd
-    l_skd = F.kl_div(F.log_softmax(i_logits/temperature, dim=2), F.softmax(logits/temperature, dim=2))
+    teacher_logits_detached = logits.clone().detach() #Stop gradients for the teacher's logits
+    l_skd = F.kl_div(F.log_softmax(i_logits/temperature, dim=2), F.softmax(teacher_logits_detached/temperature, dim=2))
 
     logits = logits.transpose(0,1)
     i_logits = i_logits.transpose(0,1)
